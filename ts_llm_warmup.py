@@ -36,17 +36,16 @@ dataset=ts_textual(21,5,tokenizer,_json_file,600,device=device)
 dataloader=DataLoader(dataset,batch_size=1,shuffle=True,collate_fn=lambda b:collate_func(b,tokenizer=tokenizer))
 
 class LLM_wrapper(nn.Module):
-    def __init__(self,tokenizer,conv_layers,patch_len,llm_model,device=device):
+    def __init__(self,tokenizer,conv_layers,llm_model,device=device):
         super().__init__()
         self.tokenizer=tokenizer
         self.llm_model=llm_model
         self.embed_size=llm_model.config.hidden_size
         """self.max_patches=max_patches
         self.max_channel=max_channel"""
-        self.P=patch_len
+        #self.P=patch_len
         self.device=device
         self.conv_layers=conv_layers
-
         self.input_embeds=self.llm_model.get_input_embeddings()
         self.input_embeds.requires_grad_(True)
         ###self.ts_conv_module=ConvFeatureExtraction(self.conv_layers,dropout=0.1)
@@ -118,8 +117,10 @@ class LLM_wrapper(nn.Module):
     
 from tqdm import tqdm
 ##features,kernel_zise,stride
-conv_layers=[(128,5,1),(64,3,1)]
-model_wrapper=LLM_wrapper(tokenizer,conv_layers,128,model,device=device)
+##conv_layers=[(128,5,1),(64,3,1)]
+conv_layers_1=[(64,7,3,1),(128,5,3,2),(256,3,2,2),(512,3,2,2),(1024,3,2,2)]
+
+model_wrapper=LLM_wrapper(tokenizer,conv_layers_1,model,device=device)
 model_wrapper.train()
 model_wrapper.to(device)
 

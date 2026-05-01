@@ -30,7 +30,7 @@ class llm_projection(nn.Module):
         ##z_gated=z_trans*z_mask
         ##layer norm
         z_llm = self.norm_projection(z_proj)
-        
+
         return z_llm
 
 """
@@ -48,7 +48,6 @@ for param_tensor in ts_encoder.state_dict():
         print(f'{param_tensor} :{ts_encoder.state_dict()[param_tensor].size()}')
     else:
         continue 
-
 ts_embeddings=ts_encoder(ts_text)
 print(ts_embeddings.shape)"""
 
