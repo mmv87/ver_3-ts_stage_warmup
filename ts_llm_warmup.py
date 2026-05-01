@@ -8,7 +8,7 @@ import os
 import sys
 import numpy as np
 from torch.utils.data import Dataset,DataLoader
-from modules.conv_module import ConvFeatureExtraction
+##from modules.conv_module import ConvFeatureExtraction
 from modules.ts_encoder_perceiver_resampler import PatchTSTEncoder
 from modules.ts_encoder import llm_projection
 
@@ -99,10 +99,10 @@ class LLM_wrapper(nn.Module):
         
         return torch.stack(assemb_embed_tensor)
 
-    def forward(self,input_ids=None,ts_input=None,ts_pairs=None,ts_idx=None,text_idx=None,attention_mask=None,labels=None,):
+    def forward(self,input_ids=None,ts_input=None,ts_pairs=None,ts_idx=None,text_idx=None,attention_mask=None,ch_mask=None,labels=None,):
         ##convert the ts_patches into ts_embeddings
         ts_tensor = ts_input.to(self.device)  ## (bs,c_in,N,P)
-        ts_embedding = self.ts_encoder(ts_tensor.to(self.device)) ## (bs,n_vars,num_patch,d_model)
+        ts_embedding = self.ts_encoder(ts_tensor.to(self.device),ch_mask) ## (bs,n_vars,num_patch,d_model)
         print(ts_embedding.shape)
         ##slicing
         ##ts_embedding_sliced =ts_embedding[ts_masks] ##flattened ts_embeddings
@@ -170,10 +170,13 @@ for epoch in range(1):  ##1 epochs
         ts_pairs=batch['ts_pairs'].to(device)
         ts_indices=batch["ts_indices"].to(device)
         textual_indices=batch['textual_indices'].to(device)
+        ch_mask =batch['ch_mask'].to(device)
+        
         ###ts_mask = batch['ts_mask'].to(device)
         ##model_wrapper=LLM_wrapper(tokenizer,ts_input,model,device=device)
         optimizer.zero_grad()
-        outputs,_= model_wrapper(input_ids=input_ids,ts_input=ts_input,ts_pairs=ts_pairs,ts_idx=ts_indices,text_idx=textual_indices,attention_mask=attention_mask,labels=labels_batch,)
+        outputs,_= model_wrapper(input_ids=input_ids,ts_input=ts_input,ts_pairs=ts_pairs,ts_idx=ts_indices,text_idx=textual_indices,
+                                 attention_mask=attention_mask,ch_mask=ch_mask,labels=labels_batch)
         loss=outputs.loss
         loss.backward()  
         ##print(f'batch{i} gradient done')

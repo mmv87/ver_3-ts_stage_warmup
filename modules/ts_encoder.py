@@ -24,8 +24,8 @@ class llm_projection(nn.Module):
         )
         self.norm_projection=nn.LayerNorm(self.d_llm)
         
-    def forward(self,x):
-        ts_features= self.ts_encoder(x)
+    def forward(self,x,ch_mask=None):
+        ts_features= self.ts_encoder(x,ch_mask)
         z_proj=self.mm_bridge(ts_features)
         ##z_gated=z_trans*z_mask
         ##layer norm
