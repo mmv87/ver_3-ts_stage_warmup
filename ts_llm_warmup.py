@@ -67,6 +67,7 @@ class LLM_wrapper(nn.Module):
         ###logic to assemble textual and ts_tokens 
         assemb_embed_tensor=[]
         channels=ts_pairs.shape[1]
+        
         slicing_dim=channels*self.lat_dim
         ##ts_embedding slicing
         ts_embeddings=torch.narrow(ts_embeddings,1,0,slicing_dim)

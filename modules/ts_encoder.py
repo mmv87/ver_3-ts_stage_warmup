@@ -7,7 +7,7 @@ from ts_encoder_rel_bias import PatchTSTEncoder
 from ts_encoder_rel_bias import PatchTSTEncoder"""
 import torch.nn as nn  
 import torch
-from ts_encoder_perceiver_resampler import PatchTSTEncoder
+#from modules.ts_encoder_perceiver_resampler import PatchTSTEncoder
 device ='cuda' if torch.cuda.is_available() else 'cpu'
 
 class llm_projection(nn.Module):
@@ -38,7 +38,7 @@ class llm_projection(nn.Module):
         z_llm = self.norm_projection(z_proj)
 
         return z_llm
-
+"""
 ts_test=torch.randn(1,1,1014)
 actual_ch=ts_test.shape[1]
 max_ch=21
@@ -61,7 +61,7 @@ ts_embeddings=ts_encoder(ts_test,ch_mask=bool_mask_batch)
 print(ts_embeddings.shape)
 
 ts_embedding_new=torch.narrow(ts_embeddings,1,0,actual_ch*lat_q_dim)
-print(ts_embedding_new)
+print(ts_embedding_new)"""
 ##print(ts_embeddings[:,:7,:5])
 
 """
