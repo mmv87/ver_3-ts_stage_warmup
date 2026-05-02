@@ -9,8 +9,9 @@ import torch.nn as nn
 import torch
 
 class llm_projection(nn.Module):
-    def __init__(self,trans_module,trans_embedding,d_fusion,d_llm):
+    def __init__(self,trans_module,trans_embedding,d_fusion,d_llm,device=None):
         super().__init__()
+        self.device =device
         self.ts_encoder=trans_module
         self.trans_embedding=trans_embedding #1024
         self.d_fusion=d_fusion ###intermediate dimesnion to 512-->[1024]-->3072
@@ -26,6 +27,8 @@ class llm_projection(nn.Module):
         
     def forward(self,x,ch_mask=None):
         ts_features= self.ts_encoder(x,ch_mask)
+        ts_features.to(self.device)
+        
         z_proj=self.mm_bridge(ts_features)
         ##z_gated=z_trans*z_mask
         ##layer norm

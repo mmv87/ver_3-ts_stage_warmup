@@ -96,7 +96,7 @@ class PositionalEmbedding(nn.Module):
 
     def forward(self,x,ch,b):
         self.pe=self.pe[:x.size(2),:].expand(ch,-1,-1).expand(b,-1,-1,-1)
-        print(f'pe_shape:{self.pe.shape}')
+        #print(f'pe_shape:{self.pe.shape}')
         return self.pe
 
 class channel_embedding(nn.Module):
