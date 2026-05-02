@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 ##import seaborn as sns
 ##from conv_module import ConvFeatureExtractionModel
 import math
-from embed_conv import ConvFeatureExtraction
+from modules.embed_conv import ConvFeatureExtraction
 #from torchinfo import summary
 
 ###device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -394,7 +394,7 @@ class PatchTSTEncoder(nn.Module):
         return z  ##(bs,n_vars,num_patch,d_model)
 
 #bool_mask_list.append(bool_mask)
-
+"""
 ts_data=torch.randn(1,1,1024)
 actual_ch=ts_data.shape[1]
 max_ch=21
@@ -411,7 +411,7 @@ ts_encoder= PatchTSTEncoder(conv_layers_1,1024,max_ch=21,n_layers=1,d_model=256,
                  dropout=0.1,activation='gelu',pre_norm=False)
 ts_embedding = ts_encoder(ts_data,bool_mask_batch)
 
-print(f'final_embedding:{ts_embedding.shape}')
+print(f'final_embedding:{ts_embedding.shape}')"""
 ##print(ts_embedding[:86,:5])
 ##summary(ts_encoder,input_data=[ts_data,bool_mask])
 
