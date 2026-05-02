@@ -92,8 +92,8 @@ class PositionalEmbedding(nn.Module):
         self.register_buffer('pe', pe)
 
     def forward(self,x,ch,b):
-        self.pe=self.pe[:x.size(2),:].expand(ch,-1,-1).expand(b,-1,-1,-1)
-        #print(f'pe_shape:{self.pe.shape}')
+        self.pe=self.pe[:x.size(2),:].expand(b,ch,-1,-1)
+        print(f'pe_shape:{self.pe.shape}')
         return self.pe
 
 class channel_embedding(nn.Module):
@@ -134,7 +134,7 @@ class DataEmbedding(nn.Module):
         print(f'x_conv:{x_conv.shape}')
         #x_conv_reshaped=x_conv.reshape(-1,c_in*t,d_conv)
         ch_ids=torch.arange(c_in,device=x.device)
-        ch_pos_embed=self.ch_pos(ch_ids).view(b,c_in,1,-1)
+        ch_pos_embed=self.ch_pos(ch_ids).view(b,c_in,1,-1).expand(b,c_in,-1,-1)
         #ch_pos_embed.to(self.device)
         print(f'ch_pos:{ch_pos_embed.shape}')
         ##print(self.temporal_pos(x_conv).shape)
