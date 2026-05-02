@@ -32,7 +32,7 @@ import json
 _json_file = os.path.join(os.environ["SLURM_TMPDIR"],"ift_train.jsonl")
 
 ###datapipeline
-dataset=ts_textual(21,5,tokenizer,_json_file,600,device=device)
+dataset=ts_textual(21,5,tokenizer,_json_file,15000,device=device)
 dataloader=DataLoader(dataset,batch_size=1,shuffle=True,collate_fn=lambda b:collate_func(b,tokenizer=tokenizer))
 
 class LLM_wrapper(nn.Module):
