@@ -8,7 +8,7 @@ import torch.nn as nn
 from typing import List, Tuple,Callable,Optional
 import numpy as np
 import matplotlib.pyplot as plt
-from torchinfo import summary
+#from torchinfo import summary
 
 device =torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 ##from conv_module import ConvFeatureExtractionModel
 import math
 from modules.embed_conv import ConvFeatureExtraction
-from torchinfo import summary
+#from torchinfo import summary
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 ### Resampler to latent_dim
