@@ -115,7 +115,7 @@ class channel_embedding(nn.Module):
         self.emb.weight = nn.Parameter(w, requires_grad=True)
 
     def forward(self, x):
-        return self.emb(x).detach()
+        return self.emb(x)
 
 class DataEmbedding(nn.Module):
     def __init__(self,d_conv=1024,conv_layers=None,max_ch=21):
