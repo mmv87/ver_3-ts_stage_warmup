@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 ##import seaborn as sns
 ##from conv_module import ConvFeatureExtractionModel
 import math
-from modules.embed_conv import ConvFeatureExtraction
+from embed_conv import ConvFeatureExtraction
 #from torchinfo import summary
 
 ###device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -129,7 +129,7 @@ class DataEmbedding(nn.Module):
         self.ch_pos=channel_embedding(self.max_ch,self.d_conv,self.device)
         
     def forward(self,x):
-        x_conv = self.conv_features(x).contiguous()
+        x_conv = self.conv_features(x)
         #print(x_conv.shape)
         b,c_in,t,d_conv=x_conv.shape
         print(f'x_conv:{x_conv.shape}')
@@ -381,7 +381,7 @@ class PatchTSTEncoder(nn.Module):
         
         self.data_embedding = DataEmbedding(d_conv=d_conv,conv_layers=conv_layers,max_ch=max_ch,device=device)
         ##Encoder
-        self.encoder = TST_encoder(max_ch=max_ch,lat_dim=lat_dim,d_model=d_conv,n_heads=2,d_ff=d_ff,norm='BatchNorm',bias=bias,
+        self.encoder=TST_encoder(max_ch=max_ch,lat_dim=lat_dim,d_model=d_conv,n_heads=2,d_ff=d_ff,norm='BatchNorm',bias=bias,
                  dropout=dropout,n_layers=n_layers,res_attention=False,pre_norm=pre_norm)
         
     def forward(self, x:torch.Tensor,ch_mask):
@@ -394,8 +394,8 @@ class PatchTSTEncoder(nn.Module):
         return z  ##(bs,n_vars,num_patch,d_model)
 
 #bool_mask_list.append(bool_mask)
-"""
-ts_data=torch.randn(1,5,2000) 
+
+ts_data=torch.randn(1,1,1024)
 actual_ch=ts_data.shape[1]
 max_ch=21
 lat_q_dim=5
@@ -411,7 +411,7 @@ ts_encoder= PatchTSTEncoder(conv_layers_1,1024,max_ch=21,n_layers=1,d_model=256,
                  dropout=0.1,activation='gelu',pre_norm=False)
 ts_embedding = ts_encoder(ts_data,bool_mask_batch)
 
-print(f'final_embedding:{ts_embedding.shape}')"""
+print(f'final_embedding:{ts_embedding.shape}')
 ##print(ts_embedding[:86,:5])
 ##summary(ts_encoder,input_data=[ts_data,bool_mask])
 

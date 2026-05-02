@@ -36,11 +36,12 @@ dataset=ts_textual(21,5,tokenizer,_json_file,600,device=device)
 dataloader=DataLoader(dataset,batch_size=1,shuffle=True,collate_fn=lambda b:collate_func(b,tokenizer=tokenizer))
 
 class LLM_wrapper(nn.Module):
-    def __init__(self,tokenizer,conv_layers,llm_model,device=device):
+    def __init__(self,tokenizer,conv_layers,llm_model,latent_dim,device=device):
         super().__init__()
         self.tokenizer=tokenizer
         self.llm_model=llm_model
         self.embed_size=llm_model.config.hidden_size
+        self.lat_dim=latent_dim
         """self.max_patches=max_patches
         self.max_channel=max_channel"""
         #self.P=patch_len
@@ -66,12 +67,14 @@ class LLM_wrapper(nn.Module):
         ###logic to assemble textual and ts_tokens 
         assemb_embed_tensor=[]
         channels=ts_pairs.shape[1]
+        slicing_dim=channels*self.lat_dim
+        ##ts_embedding slicing
+        ts_embeddings=torch.narrow(ts_embeddings,1,0,slicing_dim)
         bs=ts_embeddings.shape[0]
-        c_in=ts_embeddings.shape[1]
-        assert c_in==channels
-        num_ts_tokens=ts_embeddings.shape[2]
-        ts_emb_dim=ts_embeddings.shape[3]
-
+        T=ts_embeddings.shape[1]
+        assert T==slicing_dim
+        #num_ts_tokens=ts_embeddings.shape[2]
+        ts_emb_dim=ts_embeddings.shape[2]
         input_embeds=self.input_embeds(input_ids) ##[bs,seq_len,d_emb]
         ##input_embeds.requires_grad_(requires_grad=True) ### to make sure operations on embedding_tensor is maintained
         text_emb_dim= input_embeds.shape[2]
@@ -80,10 +83,9 @@ class LLM_wrapper(nn.Module):
         T_new=ts_token_idx.shape[1]+text_token_idx.shape[1]
         ts_container =torch.zeros((T_new,text_emb_dim),device=self.device) ### total_idx,total_idx
         ##text_container=torch.zeros((T_new,text_emb_dim),device=self.device)
-        flat_ts_embeddings=ts_embeddings.view(-1,c_in*num_ts_tokens,ts_emb_dim)
+        flat_ts_embeddings=ts_embeddings.view(-1,T,ts_emb_dim)
         flat_ts_embeddings=flat_ts_embeddings.squeeze(0)
         ##print(f'ts_embedding_flat:{flat_ts_embeddings.shape}')
-        
         flat_text_embeddings=input_embeds.squeeze(0)
         ##get the indices after the <ts>....<ts/> placeholder is offseted
         ts_indices=ts_token_idx.squeeze(0).view(-1,1)

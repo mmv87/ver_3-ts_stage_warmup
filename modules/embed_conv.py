@@ -1,5 +1,4 @@
 ## convolutions for Token_embedding
-
 import torch
 import torch.nn as nn  
 from torch import Tensor
@@ -94,11 +93,11 @@ class TokenEmbedding(nn.Module):
         return out.view(c,-1,self.d_model)
 
 ###ts_data of seq_len=400 and c_in=10 (N,C,L)
-"""ts_data=torch.randn(1,14,340)
+ts_data=torch.randn(1,1,1024)
 conv_layers_1=[(64,5,3,1),(128,5,3,2),(256,3,2,2),(512,3,2,2),(1024,3,2,2)]
 conv_layer_2=[(64,7,3,1),(128,5,3,1),(256,3,2,1),(512,3,2,1)]
 conv_model = ConvFeatureExtraction(1024,conv_layers_1,dropout=0.1,conv_bias=True)
 conv_embed = conv_model(ts_data)
 #summary(conv_model,input_size=ts_data.shape)
-print(conv_embed.shape)"""
+print(conv_embed.shape)
 ###print(ts_embed[:,:3,:5])
