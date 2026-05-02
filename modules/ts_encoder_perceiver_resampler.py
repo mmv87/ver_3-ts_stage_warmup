@@ -78,7 +78,7 @@ class Transpose(nn.Module):
 ##Either positional_embeding or ALiBi positional bias
 ###fixed temporal embedding
 class PositionalEmbedding(nn.Module):
-    def __init__(self,d_model, max_len=5000):
+    def __init__(self,d_model, max_len=500):
         super(PositionalEmbedding, self).__init__()
         # Compute the positional encodings once in log space.
         pe = torch.zeros(max_len, d_model).float()
@@ -91,10 +91,10 @@ class PositionalEmbedding(nn.Module):
         pe[:, 1::2] = torch.cos(position * div_term)
         self.register_buffer('pe', pe)
 
-    def forward(self,x,ch,b):
-        self.pe=self.pe[:x.size(2),:].expand(b,ch,-1,-1)
+    def forward(self,x,t,ch,b):
+        self.pe_shape=self.pe[:t,:].expand(b,ch,-1,-1)
         print(f'pe_shape:{self.pe.shape}')
-        return self.pe
+        return self.pe_shape
 
 class channel_embedding(nn.Module):
     def __init__(self, c_in, d_model,device):
@@ -124,7 +124,7 @@ class DataEmbedding(nn.Module):
         self.device=device
         
         self.conv_features=ConvFeatureExtraction(self.d_conv,self.conv_layers,dropout=0.1,conv_bias=True)
-        self.temporal_pos=PositionalEmbedding(self.d_conv,max_len=1000)
+        self.temporal_pos=PositionalEmbedding(self.d_conv,max_len=500)
         self.ch_pos=channel_embedding(self.max_ch,self.d_conv,self.device)
         
     def forward(self,x):
@@ -138,7 +138,7 @@ class DataEmbedding(nn.Module):
         #ch_pos_embed.to(self.device)
         print(f'ch_pos:{ch_pos_embed.shape}')
         ##print(self.temporal_pos(x_conv).shape)
-        x_pos = x_conv + self.temporal_pos(x_conv,c_in,b)+ ch_pos_embed
+        x_pos = x_conv + self.temporal_pos(x_conv,t,c_in,b)+ ch_pos_embed
         #x_pos.to(self.device)
         
         return x_pos.reshape(b,c_in*t,-1)
