@@ -50,7 +50,7 @@ class LLM_wrapper(nn.Module):
         self.input_embeds.requires_grad_(True)
         ###self.ts_conv_module=ConvFeatureExtraction(self.conv_layers,dropout=0.1)
         self.ts_transformer=PatchTSTEncoder(self.conv_layers,1024,max_ch=21,n_layers=1,d_model=256,n_heads=2,d_ff=256,bias=False,lat_dim=5,
-                 dropout=0.1,activation='gelu',pre_norm=False)
+                 dropout=0.1,activation='gelu',pre_norm=False,device=self.device)
         self.ts_transformer.to(self.device)
         self.ts_encoder = llm_projection(self.ts_transformer,1024,2048,3072,device=self.device)
         
@@ -104,7 +104,7 @@ class LLM_wrapper(nn.Module):
         ##convert the ts_patches into ts_embeddings
         ts_tensor = ts_input.to(self.device)  ## (bs,c_in,N,P)
         ts_embedding = self.ts_encoder(ts_tensor.to(self.device),ch_mask) ## (bs,n_vars,num_patch,d_model)
-        ts_embeddings.to(self.device)
+        ts_embedding.to(self.device)
         #print(ts_embedding.shape)
         ##slicing
         ##ts_embedding_sliced =ts_embedding[ts_masks] ##flattened ts_embeddings

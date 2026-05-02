@@ -13,7 +13,7 @@ import math
 from modules.embed_conv import ConvFeatureExtraction
 #from torchinfo import summary
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+###device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 ### Resampler to latent_dim
 class perceiver_resampler(nn.Module):
     def __init__(self,max_ch,lat_dim,d_embed,n_heads):
@@ -90,8 +90,6 @@ class PositionalEmbedding(nn.Module):
 
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
-
-    
         self.register_buffer('pe', pe)
 
     def forward(self,x,ch,b):
@@ -100,10 +98,11 @@ class PositionalEmbedding(nn.Module):
         return self.pe
 
 class channel_embedding(nn.Module):
-    def __init__(self, c_in, d_model):
+    def __init__(self, c_in, d_model,device):
         super(channel_embedding, self).__init__()
         w = torch.zeros(c_in, d_model).float()
         w.require_grad = True
+        self.device =device
 
         position = torch.arange(0, c_in).float().unsqueeze(1)
         div_term = (torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model)).exp()
@@ -111,22 +110,23 @@ class channel_embedding(nn.Module):
         w[:, 0::2] = torch.sin(position * div_term)
         w[:, 1::2] = torch.cos(position * div_term)
 
-        self.emb = nn.Embedding(c_in, d_model)
+        self.emb = nn.Embedding(c_in, d_model).to(self.device)
         self.emb.weight = nn.Parameter(w, requires_grad=True)
 
     def forward(self, x):
         return self.emb(x)
 
 class DataEmbedding(nn.Module):
-    def __init__(self,d_conv=1024,conv_layers=None,max_ch=21):
+    def __init__(self,d_conv=1024,conv_layers=None,max_ch=21,device=None):
         super(DataEmbedding,self).__init__()
         self.d_conv=d_conv
         self.conv_layers=conv_layers
         self.max_ch=max_ch
+        self.device=device
         
         self.conv_features=ConvFeatureExtraction(self.d_conv,self.conv_layers,dropout=0.1,conv_bias=True)
         self.temporal_pos=PositionalEmbedding(self.d_conv,max_len=1000)
-        self.ch_pos=channel_embedding(self.max_ch,self.d_conv)
+        self.ch_pos=channel_embedding(self.max_ch,self.d_conv,self.device)
         
     def forward(self,x):
         x_conv = self.conv_features(x).contiguous()
@@ -138,6 +138,7 @@ class DataEmbedding(nn.Module):
         ch_pos_embed=self.ch_pos(ch_ids).view(b,c_in,1,-1)
         ##print(self.temporal_pos(x_conv).shape)
         x_pos = x_conv + self.temporal_pos(x_conv,c_in,b)+ ch_pos_embed
+        x_pos.to(self.device)
         
         return x_pos.reshape(b,c_in*t,-1)
       
@@ -371,14 +372,14 @@ class PatchTSTEncoder(nn.Module):
         d_model: final projection dimension
     """
     def __init__(self,conv_layers:List,d_conv=1024,max_ch=21,n_layers=1,d_model=128,n_heads=8,d_ff=256,lat_dim=5,
-                 dropout=0.1,activation='gelu',pre_norm=False,bias=None,**kwargs):
+                 dropout=0.1,activation='gelu',pre_norm=False,bias=None,device=None,**kwargs):
         
         super().__init__()
         self.d_model=d_model 
         self.activation=activation
         self.n_heads=n_heads
         
-        self.data_embedding = DataEmbedding(d_conv=d_conv,conv_layers=conv_layers,max_ch=max_ch)
+        self.data_embedding = DataEmbedding(d_conv=d_conv,conv_layers=conv_layers,max_ch=max_ch,device=device)
         ##Encoder
         self.encoder = TST_encoder(max_ch=max_ch,lat_dim=lat_dim,d_model=d_conv,n_heads=2,d_ff=d_ff,norm='BatchNorm',bias=bias,
                  dropout=dropout,n_layers=n_layers,res_attention=False,pre_norm=pre_norm)
@@ -387,7 +388,7 @@ class PatchTSTEncoder(nn.Module):
         """bs,max_ch,max_N,patch_len = x.shape ##the 'z' should be in the following order 
         x=x.view(bs,max_ch*max_N,-1)"""
         u=self.data_embedding(x)   
-        print(f'conv_output:{u.shape}')   
+        #print(f'conv_output:{u.shape}')   
         z= self.encoder(u,ch_mask=ch_mask)
         ##z=torch.reshape(z,(-1,max_ch,max_N,self.d_model))
         return z  ##(bs,n_vars,num_patch,d_model)
