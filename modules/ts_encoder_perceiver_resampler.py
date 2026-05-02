@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn  
 from torch import Tensor
 import torch.nn.functional as F
-#from torchsummary import summary
 import torch.nn as nn
 from typing import List, Tuple,Callable,Optional
 import numpy as np
@@ -134,8 +133,9 @@ class DataEmbedding(nn.Module):
         b,c_in,t,d_conv=x_conv.shape
         print(f'x_conv:{x_conv.shape}')
         #x_conv_reshaped=x_conv.reshape(-1,c_in*t,d_conv)
-        ch_ids=torch.arange(c_in)
+        ch_ids=torch.arange(c_in).to(self.device)
         ch_pos_embed=self.ch_pos(ch_ids).view(b,c_in,1,-1)
+        ch_pos_embed.to(self.device)
         print(f'ch_pos:{ch_pos_embed.shape}')
         ##print(self.temporal_pos(x_conv).shape)
         x_pos = x_conv + self.temporal_pos(x_conv,c_in,b)+ ch_pos_embed
