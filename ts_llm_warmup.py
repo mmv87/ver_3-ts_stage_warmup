@@ -67,10 +67,11 @@ class LLM_wrapper(nn.Module):
         ###logic to assemble textual and ts_tokens 
         assemb_embed_tensor=[]
         channels=ts_pairs.shape[1]
-        
+
         slicing_dim=channels*self.lat_dim
         ##ts_embedding slicing
         ts_embeddings=torch.narrow(ts_embeddings,1,0,slicing_dim)
+        ts_embeddings.to(self.device)
         bs=ts_embeddings.shape[0]
         T=ts_embeddings.shape[1]
         assert T==slicing_dim
@@ -107,11 +108,12 @@ class LLM_wrapper(nn.Module):
         ##convert the ts_patches into ts_embeddings
         ts_tensor = ts_input.to(self.device)  ## (bs,c_in,N,P)
         ts_embedding = self.ts_encoder(ts_tensor.to(self.device),ch_mask) ## (bs,n_vars,num_patch,d_model)
-        ts_embedding.to(self.device)
-        #print(ts_embedding.shape)
+        #ts_embedding.to(self.device)
+        print(f'ts_embedding_shape:{ts_embedding.shape}')
         ##slicing
         ##ts_embedding_sliced =ts_embedding[ts_masks] ##flattened ts_embeddings
         input_embeddings= self.assemble_input_embeds(input_ids,ts_embedding,ts_idx,text_idx,ts_pairs)
+        input_embeddings.to(self.device)
         ##print(f'input_embeddigs:{input_embeddings.shape}')
         attention_mask = attention_mask.to(self.device)
         labels = labels.to(self.device)
@@ -124,7 +126,6 @@ from tqdm import tqdm
 ##features,kernel_zise,stride
 ##conv_layers=[(128,5,1),(64,3,1)]
 conv_layers_1=[(64,7,3,1),(128,5,3,2),(256,3,2,2),(512,3,2,2),(1024,3,2,2)]
-
 model_wrapper=LLM_wrapper(tokenizer,conv_layers_1,model,5,device=device)
 model_wrapper.train()
 model_wrapper.to(device)

@@ -339,7 +339,7 @@ class ts_textual(Dataset):
         bool_mask=torch.zeros(self.max_ch*self.lat_dim ,dtype=torch.bool)
         token_idx=torch.arange(ch*self.lat_dim)
         bool_mask[token_idx]=True
-
+        bool_mask.to(self.device)
                   
         return{"input_ids":new_text_tokens,
             "output_ids":output_ids,
