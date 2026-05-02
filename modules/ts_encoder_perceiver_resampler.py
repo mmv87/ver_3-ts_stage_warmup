@@ -298,11 +298,13 @@ class TS_encoder_layer(nn.Module):
     def __init__(self,d_model,n_heads,max_ch=5,d_ff=256,lat_dim=5,
                  dropout=0.,bias=False,pre_norm=True):
         super(TS_encoder_layer, self).__init__()
+        
         self.pre_norm = pre_norm
         self.lat_dim=lat_dim
         assert not d_model%n_heads, f'd_model ({d_model}) must be divisible by n_heads ({n_heads})'
         self.d_k = d_model // n_heads
         self.d_v = d_model // n_heads
+        
         ##use Layer norm for attention sublayer pre-norm
         self.norm_attn = nn.LayerNorm(d_model)
         ## perceiver-resampler 
@@ -340,11 +342,12 @@ class TS_encoder_layer(nn.Module):
 
 class TST_encoder(nn.Module):
      def __init__(self,max_ch=21,lat_dim=5,d_model=None,n_heads=2,d_ff=256,norm='BatchNorm',bias=False,
-                 dropout=0.,n_layers=1,res_attention=False,pre_norm=False):
+                 dropout=0.,n_layers=1,res_attention=False,pre_norm=True):
 
         super(TST_encoder,self).__init__()
         
-        self.cross_attn_block=TS_encoder_layer(max_ch=max_ch,d_model=d_model,n_heads=n_heads,lat_dim=lat_dim,d_ff=d_ff,dropout=dropout,bias=bias,pre_norm=pre_norm)
+        self.cross_attn_block=TS_encoder_layer(d_model,n_heads,max_ch=max_ch,lat_dim=lat_dim,
+                                               d_ff=d_ff,dropout=dropout,bias=bias,pre_norm=pre_norm)
         """ self.layers = nn.ModuleList([
             TS_encoder_layer(max_ch=max_ch,d_model=d_model,n_heads=n_heads,lat_dim=lat_dim,d_ff=d_ff,dropout=dropout,bias=bias,pre_norm=pre_norm)
             for _ in range(n_layers)
@@ -371,7 +374,7 @@ class PatchTSTEncoder(nn.Module):
         d_model: final projection dimension
     """
     def __init__(self,conv_layers:List,d_conv=1024,max_ch=21,n_layers=1,d_model=128,n_heads=8,d_ff=256,lat_dim=5,
-                 dropout=0.1,activation='gelu',pre_norm=False,bias=None,device=None,**kwargs):
+                 dropout=0.1,activation='gelu',pre_norm=True,bias=None,device=None,**kwargs):
         
         super().__init__()
         self.d_model=d_model 
