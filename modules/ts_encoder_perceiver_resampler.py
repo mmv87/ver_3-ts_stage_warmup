@@ -55,7 +55,7 @@ class perceiver_resampler(nn.Module):
         ##print(attn_scores)
         attn_weights =F.softmax(attn_scores,dim=-1)
         #print(attn_weights)
-        attn_weights.masked_fill_(~(ch_mask),float(0.))
+        attn_weights=attn_weights.masked_fill(~(ch_mask),float(0.))
         #attn_weights.masked_fill_(~(ch_mask),float(0))
         #attn_weights = torch.nan_to_num(attn_weights,nan=0.0)
         #print(f'attention_matrix:{attn_weights[0,0,:10,:10]}' )
@@ -109,7 +109,7 @@ class channel_embedding(nn.Module):
         w[:, 0::2] = torch.sin(position * div_term)
         w[:, 1::2] = torch.cos(position * div_term)
 
-        self.emb = nn.Embedding(c_in, d_model).to(self.device)
+        self.emb = nn.Embedding(c_in, d_model,device=self.device)
         self.emb.weight = nn.Parameter(w, requires_grad=True)
 
     def forward(self, x):
@@ -133,13 +133,13 @@ class DataEmbedding(nn.Module):
         b,c_in,t,d_conv=x_conv.shape
         print(f'x_conv:{x_conv.shape}')
         #x_conv_reshaped=x_conv.reshape(-1,c_in*t,d_conv)
-        ch_ids=torch.arange(c_in).to(self.device)
+        ch_ids=torch.arange(c_in,device=x.device)
         ch_pos_embed=self.ch_pos(ch_ids).view(b,c_in,1,-1)
-        ch_pos_embed.to(self.device)
+        #ch_pos_embed.to(self.device)
         print(f'ch_pos:{ch_pos_embed.shape}')
         ##print(self.temporal_pos(x_conv).shape)
         x_pos = x_conv + self.temporal_pos(x_conv,c_in,b)+ ch_pos_embed
-        x_pos.to(self.device)
+        #x_pos.to(self.device)
         
         return x_pos.reshape(b,c_in*t,-1)
       
