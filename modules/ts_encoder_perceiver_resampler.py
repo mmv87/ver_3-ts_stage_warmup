@@ -136,6 +136,7 @@ class DataEmbedding(nn.Module):
         #x_conv_reshaped=x_conv.reshape(-1,c_in*t,d_conv)
         ch_ids=torch.arange(c_in)
         ch_pos_embed=self.ch_pos(ch_ids).view(b,c_in,1,-1)
+        print(f'ch_pos:{ch_pos_embed.shape}')
         ##print(self.temporal_pos(x_conv).shape)
         x_pos = x_conv + self.temporal_pos(x_conv,c_in,b)+ ch_pos_embed
         x_pos.to(self.device)

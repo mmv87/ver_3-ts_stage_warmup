@@ -70,13 +70,13 @@ class LLM_wrapper(nn.Module):
 
         slicing_dim=channels*self.lat_dim
         ##ts_embedding slicing
-        ts_embeddings=torch.narrow(ts_embeddings,1,0,slicing_dim)
-        ts_embeddings.to(self.device)
-        bs=ts_embeddings.shape[0]
-        T=ts_embeddings.shape[1]
+        ts_embeddings_slice=torch.narrow(ts_embeddings,1,0,slicing_dim)
+        ts_embeddings_slice.to(self.device)
+        bs=ts_embeddings_slice.shape[0]
+        T=ts_embeddings_slice.shape[1]
+        ts_emb_dim=ts_embeddings.shape[2]
         assert T==slicing_dim
         #num_ts_tokens=ts_embeddings.shape[2]
-        ts_emb_dim=ts_embeddings.shape[2]
         input_embeds=self.input_embeds(input_ids) ##[bs,seq_len,d_emb]
         ##input_embeds.requires_grad_(requires_grad=True) ### to make sure operations on embedding_tensor is maintained
         text_emb_dim= input_embeds.shape[2]
@@ -85,7 +85,7 @@ class LLM_wrapper(nn.Module):
         T_new=ts_token_idx.shape[1]+text_token_idx.shape[1]
         ts_container =torch.zeros((T_new,text_emb_dim),device=self.device) ### total_idx,total_idx
         ##text_container=torch.zeros((T_new,text_emb_dim),device=self.device)
-        flat_ts_embeddings=ts_embeddings.view(-1,T,ts_emb_dim)
+        flat_ts_embeddings=ts_embeddings_slice.view(-1,T,ts_emb_dim)
         flat_ts_embeddings=flat_ts_embeddings.squeeze(0)
         ##print(f'ts_embedding_flat:{flat_ts_embeddings.shape}')
         flat_text_embeddings=input_embeds.squeeze(0)
@@ -108,7 +108,7 @@ class LLM_wrapper(nn.Module):
         ##convert the ts_patches into ts_embeddings
         ts_tensor = ts_input.to(self.device)  ## (bs,c_in,N,P)
         ts_embedding = self.ts_encoder(ts_tensor.to(self.device),ch_mask) ## (bs,n_vars,num_patch,d_model)
-        #ts_embedding.to(self.device)
+        ts_embedding.to(self.device)
         print(f'ts_embedding_shape:{ts_embedding.shape}')
         ##slicing
         ##ts_embedding_sliced =ts_embedding[ts_masks] ##flattened ts_embeddings
