@@ -298,28 +298,26 @@ class TS_encoder_layer(nn.Module):
     def __init__(self,d_model,n_heads,max_ch=5,d_ff=256,lat_dim=5,
                  dropout=0.,bias=False,pre_norm=True):
         super(TS_encoder_layer, self).__init__()
+        self.pre_norm = pre_norm
         self.lat_dim=lat_dim
         assert not d_model%n_heads, f'd_model ({d_model}) must be divisible by n_heads ({n_heads})'
         self.d_k = d_model // n_heads
         self.d_v = d_model // n_heads
-        ##self.self_attn = MultiheadAttention(d_model,n_heads,d_k=self.d_k,d_v=self.d_v,res_attention=res_attention,
-        ##        attn_dropout=attn_dropout,proj_dropout=0.1,qkv_bias=True,lsa=False)
-        
         ##use Layer norm for attention sublayer pre-norm
         self.norm_attn = nn.LayerNorm(d_model)
         ## perceiver-resampler 
         self.cross_attn=perceiver_resampler(max_ch,self.lat_dim,d_model,n_heads)
         self.dropout_attn= nn.Dropout(dropout)
-        
+        ##use Layer norm for FFN sublayer pre-norm
+        self.norm_ffn = nn.LayerNorm(d_model)
         self.ff = nn.Sequential(nn.Linear(d_model,d_ff,bias=bias),
                                  nn.GELU(),
                                  nn.Dropout(dropout),
                                  nn.Linear(d_ff,d_model,bias=bias))
         ##add & norm 
         self.dropout_ffn=nn.Dropout(dropout)
-        ##use Layer norm for FFN sublayer pre-norm
-        self.norm_ffn = nn.LayerNorm(d_model)
-        self.pre_norm = pre_norm ## optional to normalize prior to encoder block
+        
+         ## optional to normalize prior to encoder block
         #self.store_attn = store_attn
     def forward(self, src:Tensor,ch_mask=None) -> Tensor:
         # pre-norm
@@ -328,17 +326,17 @@ class TS_encoder_layer(nn.Module):
         # Sublayer-1. Multi-Head cross-attention with latent_q : sublayer-1
         src_resampled= self.cross_attn(src,ch_mask=ch_mask)
         print(f'cross_attention:{src_resampled.shape}')
+        
         if self.pre_norm:
             src_resampled = self.norm_ffn(src_resampled)
-            
         # Sublayer-2. Position-wise Feed-Forward :sublayer-2
         ffn_src = self.ff(src_resampled)
         #print(f'out_ffn{ffn_src.shape}')
         ## Add & Norm
-        src = src_resampled + self.dropout_ffn(ffn_src) # Add: residual connection with residual dropout
+        src_post = src_resampled + self.dropout_ffn(ffn_src) # Add: residual connection with residual dropout
         print(f'output_resampled:{src.shape}')
         ##src = (src*attn_mask.to(src.dtype).unsqueeze(-1)) ## to zeros out the padded tokens after FFN
-        return src
+        return src_post
 
 class TST_encoder(nn.Module):
      def __init__(self,max_ch=21,lat_dim=5,d_model=None,n_heads=2,d_ff=256,norm='BatchNorm',bias=False,

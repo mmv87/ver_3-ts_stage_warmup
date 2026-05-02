@@ -108,7 +108,7 @@ class LLM_wrapper(nn.Module):
         ##convert the ts_patches into ts_embeddings
         ts_tensor = ts_input.to(self.device)  ## (bs,c_in,N,P)
         ts_embedding = self.ts_encoder(ts_tensor.to(self.device),ch_mask) ## (bs,n_vars,num_patch,d_model)
-        ts_embedding.to(self.device)
+        #ts_embedding.to(self.device)
         print(f'ts_embedding_shape:{ts_embedding.shape}')
         ##slicing
         ##ts_embedding_sliced =ts_embedding[ts_masks] ##flattened ts_embeddings
@@ -177,6 +177,7 @@ for epoch in range(1):  ##1 epochs
         ts_indices=batch["ts_indices"].to(device)
         textual_indices=batch['textual_indices'].to(device)
         ch_mask =batch['ch_mask'].to(device)
+        print(f'input_ts_shape:{ts_input.shape}')
         
         ###ts_mask = batch['ts_mask'].to(device)
         ##model_wrapper=LLM_wrapper(tokenizer,ts_input,model,device=device)

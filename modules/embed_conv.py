@@ -11,6 +11,21 @@ import matplotlib.pyplot as plt
 
 device =torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+class LayerNorm1d(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        # We normalize over the 'feature' dimension (dim)
+        self.ln = nn.LayerNorm(dim)
+    def forward(self, x):
+        # Input x: [Batch*Channels, Features, Time]
+        # 1. Move Features to the last dimension
+        x = x.transpose(1, 2) # [Batch*Channels, Time, Features]
+        # 2. Normalize
+        # This calculates mean/std across the 'Features' for each 'Time' step
+        x = self.ln(x)
+        # 3. Move back to Conv format
+        return x.transpose(1, 2)
+
 class Fp32GroupNorm(nn.GroupNorm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,6 +47,7 @@ class ConvFeatureExtraction(nn.Module):
     def __init__(self,d_conv,conv_layers:List[Tuple[int, int, int]],dropout: float = 0.0,conv_bias: bool = False):
         super().__init__()
         ##assert mode in {"default", "layer_norm"}
+        #self.layernorm1D=LayerNorm1d
         in_d = 1 ## input_channel size
         self.d_conv=d_conv
         
@@ -44,7 +60,8 @@ class ConvFeatureExtraction(nn.Module):
             return nn.Sequential(
                     make_conv(),
                     nn.Dropout(p=dropout),
-                    Fp32GroupNorm(dim, dim, affine=True),
+                    LayerNorm1d(n_out),
+                    #Fp32GroupNorm(dim, dim, affine=True),
                     nn.GELU(),
                 )
         
@@ -56,19 +73,12 @@ class ConvFeatureExtraction(nn.Module):
                                         stride,dilation,conv_bias=conv_bias))
             
             in_d = dim
-    
-        ##self.pool = nn.AdaptiveAvgPool1d(1)
         
     def forward(self, x):
         b,ch,l=x.shape
         x=x.view(b*ch,-1,l).contiguous()
-        ##x=x.view(B*C*N,1,p).
-        # BxT -> BxCxT
-        ##x = x.unsqueeze(1)
         for conv in self.conv_layers:
             x = conv(x)            
-        ###u=self.pool(x)
-        #print(x.shape)
         x.contiguous()
         return x.permute(0,2,1).view(b,ch,-1,self.d_conv) #shape (batch*ch,pseudo_ts,feature)
 
