@@ -93,7 +93,6 @@ class TokenEmbedding(nn.Module):
         out=out.contiguous()
         return out.view(c,-1,self.d_model)
 
-
 ###ts_data of seq_len=400 and c_in=10 (N,C,L)
 """ts_data=torch.randn(1,14,340)
 conv_layers_1=[(64,5,3,1),(128,5,3,2),(256,3,2,2),(512,3,2,2),(1024,3,2,2)]
