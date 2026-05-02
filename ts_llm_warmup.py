@@ -124,7 +124,7 @@ from tqdm import tqdm
 ##conv_layers=[(128,5,1),(64,3,1)]
 conv_layers_1=[(64,7,3,1),(128,5,3,2),(256,3,2,2),(512,3,2,2),(1024,3,2,2)]
 
-model_wrapper=LLM_wrapper(tokenizer,conv_layers_1,model,device=device)
+model_wrapper=LLM_wrapper(tokenizer,conv_layers_1,model,5,device=device)
 model_wrapper.train()
 model_wrapper.to(device)
 
